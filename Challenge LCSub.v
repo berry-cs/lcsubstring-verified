@@ -10,11 +10,6 @@ From Coq Require Import Lia.
 Locate "+".
 
 
-Print Datatypes.length.
-
-Print last.
-Print removelast.
-
 Definition lstA := [ 1; 5; 10; 3; 6; 4].
 Definition lstB := [ 9; 2; 6; 4; 5; 10; 3].
 
@@ -45,20 +40,77 @@ Compute all_subseqs lstA.
 
 Compute (all_subseqs lstA).
 
-Definition common_subseq: 
-            list (list nat) -> list (list nat) -> list (list nat). 
+Print hd.
 
-Admitted.
+Compute (lstA = lstB).
+Print forallb.
+Print Nat.eqb.
 
-Definition longest_subseq: list (list nat ) -> list nat.
-Admitted.
 
+
+Fixpoint same_list (l1 l2 : list nat) : bool :=
+        match l1, l2 with 
+        | nil , nil =>  true
+        | nil, _ => false 
+        | _ , nil => false
+        | h0 :: t0 , h1 :: t1 =>  if ( Nat.eqb h0 h1)
+                                        then same_list t0 t1 
+                                         else false
+      end.
+
+
+Compute (same_list lstA lstB). 
+Compute (same_list lstA lstA).
+
+
+Fixpoint contains_list (l1: list nat )(l2: list (list nat)) : bool :=
+          match l2 with 
+        | nil => false
+        | [h] => if(same_list h l1) 
+                      then true
+                      else false
+        | h::t => if (same_list h l1) 
+                            then true 
+                            else contains_list l1 t
+      end.
+
+
+
+Fixpoint common_subseq (l1 l2: list (list nat)) : list (list nat) :=
+           match l1, l2 with 
+        | _ , nil => nil
+        |  nil, _ => nil 
+        |  h :: t, _ =>  if (contains_list  h l2)
+                            then h :: common_subseq  t l2
+                            else common_subseq t l2 
+      end. 
+
+Compute (common_subseq (all_subseqs lstA)(all_subseqs lstB)).
+
+
+
+
+Fixpoint longest_subseq (l: list (list nat )) : list nat :=
+ match l with
+ | [] => []
+ | [a] => a
+ | h :: t => let C := (longest_subseq t) in
+             if Datatypes.length C <=?
+                Datatypes.length h
+             then h
+             else C
+ end.
+
+Compute longest_subseq (all_subseqs lstA).
 
 
 
 Definition lcs (A B : list nat) : list nat :=
 longest_subseq
   (common_subseq (all_subseqs A) (all_subseqs B)).
+
+
+Compute (lcs lstA lstB).
 
 
 
