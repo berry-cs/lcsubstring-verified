@@ -114,3 +114,37 @@ Compute (lcs lstA lstB).
 
 
 
+
+Inductive Prefix : list nat -> list nat -> Prop :=
+  | pref_nil : forall p, Prefix [] p
+  | pref_cons : forall x p q, Prefix p q -> Prefix (x::p) (x::q).
+
+Inductive Subseq : list nat -> list nat -> Prop := 
+  | ss_pref : forall p q, Prefix p q -> Subseq p q
+  | ss_cons : forall x p q, Subseq p q -> Subseq p (x::q).
+
+
+Lemma all_subs_refl : forall ns ss, 
+               In ss (all_subseqs ns) -> Subseq ss ns.
+Proof.
+  intros ns.
+  induction ns as [ | n ns' IHns].
+  - simpl. intros ss [H | H].
+    -- rewrite <- H. constructor. constructor.
+    -- inversion H.
+  - intros ss Hin.
+    -- unfold all_subseqs in Hin. fold all_subseqs in Hin.
+        
+Search (In _ (_ ++ _)).
+       destruct (in_app_or _ _ _ Hin).
+  2: {     apply ss_cons.
+    apply IHns. auto.
+     }
+ 1: { apply ss_pref.
+      apply all_prefs_refl. 
+}
+Qed.
+
+   
+
+
