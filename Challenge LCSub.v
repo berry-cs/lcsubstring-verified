@@ -49,7 +49,7 @@ Compute (same_list lstA lstA).
 Fixpoint contains_list (l1: list nat )(l2: list (list nat)) : bool :=
           match l2 with 
         | nil => false
-(*        | [h] => if(same_list h l1)    ---  Don't include this-- it makes for more cases in proofs *)
+(*        | [h] => if(same_list h l1)    ---  Don't include this-- it makes for more cases in proofs
                       then true
                       else false*)
         | h::t => if (same_list h l1) 
@@ -124,7 +124,18 @@ Qed.
 *)
 Lemma same_list_eq : forall lA lB, same_list lA lB = true <-> lA = lB.
 Proof.
-Admitted.
+split.
+- generalize dependent lB. induction lA.
+  * intros. simpl in H. destruct lB. auto. discriminate.
+  * intros. destruct lB. simpl in H. discriminate. simpl in H. destruct (a =? n) eqn:Han.
+    + Search (_ =? _ = true). rewrite Nat.eqb_eq in Han. rewrite Han. replace lA with lB.
+      auto. symmetry. apply IHlA. auto.
+    + discriminate.
+- generalize dependent lB. induction lA.
+  * intros. destruct lB. auto. discriminate.
+  * intros. destruct lB. discriminate. rewrite H. apply same_list_refl.
+Qed.
+
 
 
 (* Hints:
