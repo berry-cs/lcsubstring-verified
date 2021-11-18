@@ -112,7 +112,11 @@ Inductive Subseq : list nat -> list nat -> Prop :=
 *)
 Lemma same_list_refl : forall lA, same_list lA lA = true.
 Proof.
-Admitted.
+  intros. induction lA.
+  - reflexivity.
+  - simpl. rewrite Nat.eqb_refl.
+    apply IHlA.
+Qed.
 
 
 (* Hints:
@@ -128,7 +132,22 @@ Admitted.
 *)
 Lemma contains_list_In : forall lst lstlsts, contains_list lst lstlsts = true <-> In lst lstlsts.
 Proof.
-Admitted.
+  intros. split.
+  - induction lstlsts. 
+    -- intros. discriminate.
+    -- intros. simpl in *. destruct (same_list a lst) eqn:Heq. 
+      + left. rewrite <- same_list_eq. apply Heq. 
+      + right. rewrite H in IHlstlsts. apply IHlstlsts. reflexivity.
+  - induction lstlsts.
+    -- intros. inversion H.
+    -- intros. simpl in *. destruct (same_list a lst) eqn:Heq ; auto.
+       apply IHlstlsts.
+       destruct H.
+       --- rewrite <- same_list_eq in H.
+           rewrite H in Heq.
+           discriminate.
+       --- auto.
+Qed.
 
 
 (* Hints:
