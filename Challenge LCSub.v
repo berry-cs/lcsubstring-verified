@@ -171,6 +171,7 @@ Qed.
 Lemma common_subseq_correct :
       forall l1 l2 lst,  In lst (common_subseq l1 l2) <-> In lst l1 /\ In lst l2.
 Proof.
+(*on my other computer*)
 Admitted.
 
 
@@ -180,20 +181,51 @@ Admitted.
 Lemma longest_subseq_correct :
   forall lstlsts lst, In lst lstlsts -> length lst <= length (longest_subseq lstlsts).
 Proof.
-Admitted.
+  intros.
+
+  generalize dependent lst.
+  induction lstlsts as [ | h lstlsts' ].
+    - simpl. intros. simpl in H. inversion H.
+    - simpl. intros.
+      destruct H as [H1 | H1].
+      -- rewrite H1. 
+         destruct (length(longest_subseq lstlsts') <=? length lst) eqn:Heq; auto.
+         rewrite Nat.leb_nle in Heq.
+        lia.
+      -- destruct ( length (longest_subseq lstlsts') <=? length h) eqn:Heq; auto.
+         rewrite Nat.leb_le in Heq.
+         Search (_ <= _ -> _ <= _ -> _ <= _).
+         apply Nat.le_trans with (m := length (longest_subseq lstlsts')).
+         apply IHlstlsts'; auto.
+         auto.
+Qed.
 
 
 Lemma longest_subseq_In :
   forall lstlsts, lstlsts <> nil -> In (longest_subseq lstlsts) lstlsts.
 Proof.
-Admitted.
-
+  induction lstlsts as [ | h t].
+      - simpl. auto.
+      - simpl. intros. destruct (length (longest_subseq t) <=? length h ) eqn: Heq.
+        -- left. auto.
+        -- right. apply IHt. 
+           rewrite Nat.leb_nle in Heq.
+           assert ( length h < length (longest_subseq t)  ).
+           lia.
+           destruct t; auto.
+           simpl in H0. inversion H0.
+           intros Habs. 
+           inversion Habs.
+Qed.
 
 (* Hints:
    - use  in_map_iff   (rewrite in_map_iff in ...)
 *)
 Lemma not_nil_in_all_prefixs : forall l, ~In [] (all_prefixs l).
 Proof.
+induction l as [ | h t ].
+- simpl. unfold not. auto.
+- simpl. unfold not. intros. 
 Admitted.
 
 
