@@ -161,6 +161,15 @@ Proof.
 Qed.
 
 
+
+
+Ltac silly_in :=
+  match goal with
+   | x : In _ [] |- _ => inversion x
+   | x : In _ (common_subseq [] _) |- _ => inversion x
+  end.
+
+
 (* Hints:
    - split and use induction on l1. 
    - uses contains_list_In  (rewrite contains_list_In)
@@ -171,8 +180,35 @@ Qed.
 Lemma common_subseq_correct :
       forall l1 l2 lst,  In lst (common_subseq l1 l2) <-> In lst l1 /\ In lst l2.
 Proof.
-(*on my other computer*)
-Admitted.
+intros. 
+split.
+
+induction l1 as [ | h t IHL].
+  - intros Heq. silly_in. (*simpl in *. inversion Heq. *)
+  - intros Heq. split. simpl. simpl in Heq. destruct (contains_list h l2) eqn: Heq2.
+  simpl in Heq. destruct Heq. left. auto. apply IHL in H. destruct H. right. apply H.
+  apply IHL in Heq. destruct Heq. right. apply H. 
+  simpl in Heq. destruct (contains_list h l2) eqn:Heq2. simpl in Heq. destruct Heq. 
+  rewrite contains_list_In in Heq2. rewrite H in Heq2. apply Heq2.
+  apply IHL in H. destruct H. apply H0.
+  apply IHL in Heq. destruct Heq; auto.
+
+  - induction l1;
+    intros (H1, H2).
+    silly_in.
+    simpl in *. destruct (contains_list a l2) eqn:Heq2. 
+    -- simpl. destruct H1.
+              --- left.
+                  apply H.
+              --- right. apply IHl1. split. auto. auto.
+
+    -- apply IHl1.
+      split; auto.
+      destruct H1; auto.
+      rewrite H in Heq2.
+      rewrite <- contains_list_In in H2.
+      rewrite H2 in Heq2. inversion Heq2.
+Qed.
 
 
 (* Hints:
@@ -225,8 +261,10 @@ Lemma not_nil_in_all_prefixs : forall l, ~In [] (all_prefixs l).
 Proof.
 induction l as [ | h t ].
 - simpl. unfold not. auto.
-- simpl. unfold not. intros. 
-Admitted.
+- simpl. unfold not. intros. rewrite in_map_iff in H. inversion H. inversion H0. simpl in *. 
+  inversion H0. destruct H1.
+    -- inversion H1.
+ Qed.
 
 
 (* Hints:
@@ -235,8 +273,11 @@ Admitted.
 *)
 Lemma nil_in_all_subseqs : forall l, In [] (all_subseqs l).
 Proof.
-Admitted.
-
+  induction l; simpl; auto.
+  right; auto. 
+  Search (In _ (_ ++ _)).
+  apply in_or_app; auto.
+Qed.
 
 (* Lots of subcases on this one!
    in_map_iff   is helpful. *)
