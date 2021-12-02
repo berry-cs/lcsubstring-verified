@@ -293,7 +293,7 @@ Proof.
       inversion H0.*)
     - intros ss [H | H]; simpl in H.
       -- exists a; exists nil; split; auto.
-         rewrite <- H; repeat constructor.
+         rewrite <- H. apply pref_cons. apply pref_nil.
       -- destruct ss as [ | p' ss'] eqn:Heq.
          --- rewrite in_map_iff in H.
              destruct H as (x, (H1, H2)); inversion H1.
