@@ -284,13 +284,46 @@ Qed.
 Lemma all_prefs_correct : forall ns ss,
     In ss (all_prefixs ns) <-> exists h, exists t, ss = h::t /\ Prefix ss ns.
 Proof.
-split. 
-    - intros. generalize dependent ss. induction ns.
-          -- intros. inversion H. 
-          -- intros. simpl in *. rewrite in_map_iff in H. destruct H.
-                                  * exists (a). exists [].  split.
-                                      ** symmetry. apply H.
-                                      ** destruct ns. rewrite H. simpl. auto.  
+  split.
+  {
+    generalize dependent ss.
+    induction ns.
+    - intros ss H; simpl in H; inversion H.
+(*      rewrite <- H0; constructor.
+      inversion H0.*)
+    - intros ss [H | H]; simpl in H.
+      -- exists a; exists nil; split; auto.
+         rewrite <- H; repeat constructor.
+      -- destruct ss as [ | p' ss'] eqn:Heq.
+         --- rewrite in_map_iff in H.
+             destruct H as (x, (H1, H2)); inversion H1.
+         --- exists p'; exists ss'; split; auto.
+             assert (H' := H).
+             rewrite in_map_iff in H'.
+             destruct H' as (x, (H1, H2)).
+             inversion H1; replace p' with a; auto.
+             constructor.
+             destruct (IHns _ H2) as (_, (_, (_, IHnss))).
+             replace ss' with x; auto.
+  }
+  {
+    generalize dependent ss.
+    induction ns as [ | n ns' ].
+    - intros ss (h, (t, (He, Hp))); inversion Hp; simpl; auto.
+      rewrite He in H; discriminate.
+    - intros ss (h, (t, (He, Hp))).
+      rewrite He in *; clear ss He.
+      replace h with n in *; try clear h.
+      2: { inversion Hp; auto. }
+      inversion Hp.
+      simpl.
+      destruct t as [ | n' t']; auto.
+      right.
+      apply in_map.
+      apply IHns'.
+      eauto.
+  }
+Qed. 
 
 
 
