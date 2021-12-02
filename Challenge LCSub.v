@@ -1,4 +1,4 @@
-(*Largest Common Substring List of Numbers*)
+ (*Largest Common Substring List of Numbers*)
 
 From Coq Require Import Arith.Arith.
 From Coq Require Import Lists.List.
@@ -284,7 +284,13 @@ Qed.
 Lemma all_prefs_correct : forall ns ss,
     In ss (all_prefixs ns) <-> exists h, exists t, ss = h::t /\ Prefix ss ns.
 Proof.
-Admitted.
+split. 
+    - intros. generalize dependent ss. induction ns.
+          -- intros. inversion H. 
+          -- intros. simpl in *. rewrite in_map_iff in H. destruct H.
+                                  * exists (a). exists [].  split.
+                                      ** symmetry. apply H.
+                                      ** destruct ns. rewrite H. simpl. auto.  
 
 
 
@@ -348,9 +354,11 @@ Qed.
 Lemma common_subseq_all_subseqs_not_nil :
   forall lA lB, common_subseq (all_subseqs lA) (all_subseqs lB) <> [].  
 Proof.
-Admitted.
-
-
+  intros.
+  assert (In [] (common_subseq (all_subseqs lA) (all_subseqs lB))).
+  apply common_subseq_correct. split; apply nil_in_all_subseqs.
+  intros H1. rewrite H1 in H. inversion H.
+  Qed.
 (* Put it all together! *)
 Theorem lcs_correct :
   forall lA lB lC,
