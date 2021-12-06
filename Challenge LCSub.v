@@ -70,16 +70,26 @@ Fixpoint common_subseq (l1 l2: list (list nat)) : list (list nat) :=
 Compute (common_subseq (all_subseqs lstA)(all_subseqs lstB)).
 
 
+(*The purpose of this fixpoint is to take a list of lists and return the longest list
+element. In this case, we will pass this a list of subsequences and it will return
+the longest subsequence. *)
 
 Fixpoint longest_subseq (l: list (list nat )) : list nat :=
+
  match l with
- | [] => []
-(* | [a] => a   ---  Don't include this -- it makes for more cases in proofs *) 
+ | [] => [] (* if the list of subsequences is (l) is empty then return empty*)
+(* | [a] => a   ---  Don't include this -- it makes for more cases in proofs *)
+ 
  | h :: t => let C := (longest_subseq t) in
              if Datatypes.length C <=?
                 Datatypes.length h
              then h
              else C
+
+ (* if there is a subsequence list that is longer than the initial head subsequence then
+  override the variable C with the longer sequence.  Continue to compare until you hit
+   the end of the list *)
+
  end.
 
 Compute longest_subseq (all_subseqs lstA).
@@ -216,41 +226,97 @@ Qed.
 *)
 Lemma longest_subseq_correct :
   forall lstlsts lst, In lst lstlsts -> length lst <= length (longest_subseq lstlsts).
+(* If a subsequence (lst) is in the list of subquences (lstlsts),
+  the length of the subsequence (lst) is lesser than or equal to the length of the longest 
+  list element in the list of subsequences (lstlsts)*)
 Proof.
-  intros.
+  intros. 
+  induction lstlsts as [ | h lstlsts' ]. 
+  (*two cases *)
 
-  generalize dependent lst.
-  induction lstlsts as [ | h lstlsts' ].
+  (* first case *)
     - simpl. intros. simpl in H. inversion H.
-    - simpl. intros.
-      destruct H as [H1 | H1].
-      -- rewrite H1. 
+    (* This case is where the list of lists is empty and H is contradictory.
+          By definition there can never be a subsequence in an empty list*)
+
+  (*second case*)
+  (*this is the case where the list of subsequences is not empty *)
+    - simpl. intros. (* this simpl unfolds In into two cases where the subsequence is either in the 
+                          head or the tail*)
+
+      destruct H as [H1 | H1].  (*destruct the hypothesis H into two cases where the subsequence is either
+                                  in the head or somewhere in the rest of the list *)
+     (* destruct H case 1*)
+     (* This case is where the subsequence (lst) is the head *)
+      -- rewrite H1. (*replaces the h in the goal with lst using H1 as the proof *)
+         (* assuming that lst is equal to h, we then need to anaylze whether the head is
+            greater than or equal to the rest of the list *)
          destruct (length(longest_subseq lstlsts') <=? length lst) eqn:Heq; auto.
+         (* the first case where lst, the head, is the longest subsequence is 
+            self explanatory to prove as the length of lst is less than or equal to itself *)
          rewrite Nat.leb_nle in Heq.
+         (* In the second case the longest subsequence is found in the tail and is
+            proved as the goal and our Heq hypothesis are effectievly the same as 
+            if length lst is less than or equal to length of the largest subsequence
+            of the tail then length lst is not greater than length of the largest
+            subsequence of the tail *)
         lia.
+      (* This case is where the subsequence (lst) is in the tail of the list of lists *)
+      (* We first have to destruct to see whether the longest element in the list of
+         subsequences is the *)
       -- destruct ( length (longest_subseq lstlsts') <=? length h) eqn:Heq; auto.
-         rewrite Nat.leb_le in Heq.
+         rewrite Nat.leb_le in Heq. (* turns the boolean to computational *)
          Search (_ <= _ -> _ <= _ -> _ <= _).
+         (* In the inductive hypothesis, we have that the length of lst is less than
+            or equal to the length of the longest subsequence of the tail. In Heq,
+            we have that the length of the longest subsequence of the tail is less
+            than or equal to the length of h. Therefore by the transitive property, 
+            we have that the length of lst is less than the length of h. *)
          apply Nat.le_trans with (m := length (longest_subseq lstlsts')).
-         apply IHlstlsts'; auto.
+         (* Now we can apply the inductive hypothesis and then 
+            auto applies H1 and Heq *)
+         apply IHlstlsts'. auto.
          auto.
 Qed.
 
 
 Lemma longest_subseq_In :
   forall lstlsts, lstlsts <> nil -> In (longest_subseq lstlsts) lstlsts.
+  (* As long as a list of sbusequences is not equal to nil, then the longest subsequence
+     of a list of subsequences must be in the original list of subsequences *)
 Proof.
   induction lstlsts as [ | h t].
+  (* two cases *)
+        (* in the first case where the list of subsequences is empty, this contradicts the
+           initial premise and therefore is nonsensical*)
       - simpl. auto.
+        (* in the second case where the list of subsequences is not empty we have to break
+           this down into further cases where we first unfold In into the head and tail.
+           we then have to destruct the conditional if where the head is either the longest
+           subsequence or the longest subsequence is in the tail *)
       - simpl. intros. destruct (length (longest_subseq t) <=? length h ) eqn: Heq.
+           (* the case where h is the longest subsequence, we choose the left case where h
+              = to h is reflexivly true *)
         -- left. auto.
+           (* in the second case, where h is not the longest subsequence, we work with
+              the right case, where the longest subsequence of the tail is in the tail
+              which is equal to our inductive hypothesis *)
         -- right. apply IHt. 
+           (* applying our inductive hypotehsis we must further prove that t is not 
+              equal to empty which is true by our premise *)
            rewrite Nat.leb_nle in Heq.
+           (* since we know the head is not the longest, the head must be shorter than
+              everything else in the list which means the longest subsequence in the tail
+              can not be empty *)
            assert ( length h < length (longest_subseq t)  ).
            lia.
+           (* doing case analysis on t *)
            destruct t; auto.
-           simpl in H0. inversion H0.
-           intros Habs. 
+           (* the first case where t is empty is nonsensical because H0 simplified is
+           saying that the length of h is less than 0 *)
+           simpl in H0. inversion H0. 
+           
+           intros Habs. (*l::t cannot be equal to empty, by the definition of cons. *)
            inversion Habs.
 Qed.
 
@@ -392,6 +458,8 @@ Proof.
   apply common_subseq_correct. split; apply nil_in_all_subseqs.
   intros H1. rewrite H1 in H. inversion H.
   Qed.
+
+
 (* Put it all together! *)
 Theorem lcs_correct :
   forall lA lB lC,
@@ -419,3 +487,8 @@ Proof.
        rewrite common_subseq_correct.
        split; rewrite all_subs_correct; auto.
 Qed.
+
+
+
+
+
