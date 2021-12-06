@@ -13,6 +13,9 @@ Definition lstB := [ 9; 2; 6; 4; 5; 10; 3].
 
 (* Note: this produces all *** non-empty *** prefixes,
          which is slightly different than the concept defined by the Prefix property below *)
+(* Splits the list into a head and a tail and then works backwards 
+   generating all prefixes of the tail before mapping the head on to 
+   each of them. *)
 Fixpoint all_prefixs  (l : list nat) : list (list nat) := 
   match l with 
     | nil => nil
