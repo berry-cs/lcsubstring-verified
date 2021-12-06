@@ -51,6 +51,9 @@ Compute (same_list lstA lstB).
 Compute (same_list lstA lstA).
 
 
+(* This recursively checks if l1 is equal to any of the elements
+   of l2. If theres a match it returns true, otherwise false. 
+   This is effectively a computational version of In *)
 Fixpoint contains_list (l1: list nat )(l2: list (list nat)) : bool :=
           match l2 with 
         | nil => false
@@ -156,22 +159,71 @@ Qed.
 (* Hints:
    - Uses same_list_eq and same_list_refl.
 *)
-Lemma contains_list_In : forall lst lstlsts, contains_list lst lstlsts = true <-> In lst lstlsts.
+(* For any given list and list of lists, the list of lists
+   contains the list if, and only if, the list is In the list of lists *)
+Lemma contains_list_In : forall lst lstlsts, 
+      contains_list lst lstlsts = true <-> In lst lstlsts.
 Proof.
-  intros. split.
+  intros.
+  (* Split into the two directions *)
+  split.
+  (* Case analysis on the list of lists giving us two cases *)
   - induction lstlsts. 
+    (* in the first case where lstlsts is empty, it's impyling that 
+       lst is contained within an empty list which is nonsensical by 
+       our defintion of contains_list *)
     -- intros. discriminate.
-    -- intros. simpl in *. destruct (same_list a lst) eqn:Heq. 
-      + left. rewrite <- same_list_eq. apply Heq. 
-      + right. rewrite H in IHlstlsts. apply IHlstlsts. reflexivity.
+    (* in the second case where the list of lists is not empty, we introduce 
+       the premise, and then simplify both the premise and the goal into the cases where lst
+       is in the head or lst is in the tail. *)
+    -- intros. simpl in *.
+       (* we then destruct the conditional in H into its two cases *)
+       destruct (same_list a lst) eqn:Heq. 
+       (* in the fist case where lst matches the head of lstlsts, 
+          we utilize the left case, using our previous lemma same_list_eq
+          which takes the computational equality in our goal and turns it
+          into a boolean comparison aligning with our premise. 
+          Thus allowing us to apply Heq *)
+       + left. rewrite <- same_list_eq. apply Heq. 
+       (* in the second case where lst is in the tail, we utilize the right 
+          case allowing us to rewrite H in our inductive hypothesis. The 
+          inductive hypothesis then matches our goal and can be applied 
+          leaving a conclusion that is refleively true *)
+       + right. rewrite H in IHlstlsts. apply IHlstlsts. reflexivity.
+       (* This concludes the proof in the first direction *)
+  (* we must now prove the second direction *)
   - induction lstlsts.
+  (* Case analysis on the list of lists giving us two cases *)
+  (* in the first case where lstlsts is empty, it's impyling that 
+       lst is In an empty list which is nonsensical by 
+       the definition of In *)
     -- intros. inversion H.
-    -- intros. simpl in *. destruct (same_list a lst) eqn:Heq ; auto.
+    (* in the second case where the list of lists is not empty, we introduce 
+       the premise, and then simplify both the premise and the goal into the cases where lst
+       is in the head or lst is in the tail. *)
+    -- intros. simpl in *. 
+       (* we then destruct the conditional in the goal into its two cases and use auto
+          to take care of the trivial case where lst is equal to the head *)
+       destruct (same_list a lst) eqn:Heq; auto.
+       (* Now in the case where samelist is false
+          we then apply the inductive hypothesis *)
        apply IHlstlsts.
+       (* we now split H into its two cases *)
        destruct H.
+       (* in the first case we use our previous lemma same_list_eq
+          which takes the computational equality in H and turns it
+          into a boolean comparison contradicting Heq. *)
        --- rewrite <- same_list_eq in H.
+           (* we can now rewrite H into Heq to prove to coq 
+              that this case is nonsensical. This is because same_list 
+              being false by the false case of our previous destruct
+              of (same_list a lst) contradicts our premise that the head
+              is equal to lst. therefore by same_list_eq the head being
+              the same list as lst is true *)
            rewrite H in Heq.
            discriminate.
+       (* in the second case the goal is the same as the premise
+          in H and therefore is trivial. *)
        --- auto.
 Qed.
 
@@ -498,6 +550,10 @@ Proof.
 
 
 (* Put it all together! *)
+(* given lists lA, lB and lC, if lC is the longest common subsequence of lA and lB
+   then lC is a subsequence of both lA and lB and is at least as long as any other 
+   common subsequece of lA and lB. This can be proven utilizing all of the 
+   previously proven lemmas *)
 Theorem lcs_correct :
   forall lA lB lC,
     lC = (lcs lA lB) -> Subseq lC lA /\ (* lC is a subsequence of each list ... *)
@@ -524,8 +580,6 @@ Proof.
        rewrite common_subseq_correct.
        split; rewrite all_subs_correct; auto.
 Qed.
-
-
 
 
 
