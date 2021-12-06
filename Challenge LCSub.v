@@ -26,11 +26,13 @@ Fixpoint all_prefixs  (l : list nat) : list (list nat) :=
 Compute (all_prefixs lstA).
 
 
+(* This iterates through a list of natural numbers appending the list of all prefixes
+   from each possible starting point into a larger list of all possible subsequences including
+   empty *)
 Fixpoint all_subseqs (ns : list nat) : list (list nat) :=
   match ns with 
      | nil => [ns]
-     | h::t => ( all_prefixs ns ) ++ (all_subseqs t) 
-      
+     | h::t => (all_prefixs ns) ++ (all_subseqs t) 
   end.
 
 Compute all_subseqs lstA.
@@ -326,13 +328,24 @@ Qed.
 (* Hints:
    - use  in_map_iff   (rewrite in_map_iff in ...)
 *)
+
 Lemma not_nil_in_all_prefixs : forall l, ~In [] (all_prefixs l).
+(* Given a list l, all prefixes of list l will not contain empty *)
 Proof.
 induction l as [ | h t ].
+(* two cases *)
+  (* we do case analysis on the list l, in the first case where l is empty, by the Coq
+     definition of In, an empty list of lists simplifies to false, and not false aka false
+     implies false is true *)
 - simpl. unfold not. auto.
-- simpl. unfold not. intros. rewrite in_map_iff in H. inversion H. inversion H0. simpl in *. 
-  inversion H0. destruct H1.
-    -- inversion H1.
+  (* in the second case where the list of prefixes is not empty we have to break
+     this down into further cases where we first unfold In into the head and tail. *)
+- simpl. unfold not. intros. rewrite in_map_iff in H. inversion H.
+    (* In the left case, a list of h is not equal to empty so this is nonsensical. *)
+  * inversion H0. 
+    (* In this case, in H0 its made the assumption that there is some list x such that
+       h consed onto empty which is nonsensical by definition *)
+  * inversion H0. destruct H1. inversion H1.
  Qed.
 
 
@@ -341,11 +354,19 @@ induction l as [ | h t ].
    - this one is really short
 *)
 Lemma nil_in_all_subseqs : forall l, In [] (all_subseqs l).
+(* for a given list l of natural numbers, all subesequenes of l will contain a list of empty *)
 Proof.
-  induction l; simpl; auto.
-  right; auto. 
+  (* two cases. in the first case, the list of natural numbers is assumed to be empty.
+     this case is trivial as it simplifies to empty equals empty which is true *)
+  induction l. simpl. auto.
+  (* in the second case, we assume the list is not empty, so either the first item of the l
+     is empty or emty is further down in the tail of the list. going right... *)
+  simpl. right.
   Search (In _ (_ ++ _)).
-  apply in_or_app; auto.
+  (* using the preexisting in_or_app coq theorem that states that if something is in a list
+     appended to another list, then that thing is either in the first list or the second
+     list, we prove this case by our inductive hypothesis. *)
+  apply in_or_app. auto.
 Qed.
 
 (* Lots of subcases on this one!
@@ -454,11 +475,24 @@ Qed.
    - not very long, use common_subseq_correct and nil_in_all_subseqs.
 *)
 Lemma common_subseq_all_subseqs_not_nil :
-  forall lA lB, common_subseq (all_subseqs lA) (all_subseqs lB) <> [].  
+  forall lA lB, common_subseq (all_subseqs lA) (all_subseqs lB) <> [].
+(* given two lists of natural numbers, first computing their individual subsequences before
+   finding which subsequences they have in common, the list of said common subsequences will
+   not be equal to empty *)
 Proof.
   intros.
+  (* based on our definitions of all_subseqs and common_subseq, an empty list will always be a
+     an element of the computed list of lists of common_subseq which means the list computed
+     from common_subseq can not itself be equal to empty  *)
   assert (In [] (common_subseq (all_subseqs lA) (all_subseqs lB))).
+  (* relying on our previous lemma common_subseq_correct which proved that if in element is
+     part of a computed list of common_subseq from list A and list B then the given elment must
+     be in list A or list B, furthering splitting the proof for the assertion and applying
+     the lemma that the empty list will always be in all subsequences of a list, we can
+     prove the assertion *)
   apply common_subseq_correct. split; apply nil_in_all_subseqs.
+  (* rewriting the premise in H, we derive a nonsensical assumption that empty is In empty
+     which is false by the definition of In *)
   intros H1. rewrite H1 in H. inversion H.
   Qed.
 
