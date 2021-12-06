@@ -37,15 +37,18 @@ Fixpoint all_subseqs (ns : list nat) : list (list nat) :=
 
 Compute all_subseqs lstA.
 
-
+(* checks if the two given lists are the same *)
 Fixpoint same_list (l1 l2 : list nat) : bool :=
         match l1, l2 with 
-        | nil , nil =>  true
-        | nil, _ => false 
-        | _ , nil => false
+        | nil , nil =>  true (* if they are both nil return true*) 
+        | nil, _ => false (* if the first is nil and the second is not return false *)
+        | _ , nil => false (* if the second is nil and the first is not return false *)
+
+        (* in the case that they are both non empty lists the function will recursively check the
+           head of the list to make sure that they are equal *) 
         | h0 :: t0 , h1 :: t1 =>  if ( Nat.eqb h0 h1)
                                         then same_list t0 t1 
-                                         else false
+                                         else false 
       end.
 Compute (same_list lstA lstB). 
 Compute (same_list lstA lstA).
@@ -128,30 +131,91 @@ Inductive Subseq : list nat -> list nat -> Prop :=
 (* Hints:
    - use Nat.eqb_refl
 *)
+
+(*For all lists lA, lA is the same_list as lA *)
 Lemma same_list_refl : forall lA, same_list lA lA = true.
 Proof.
   intros. induction lA.
-  - reflexivity.
-  - simpl. rewrite Nat.eqb_refl.
-    apply IHlA.
+    (* induction on lA to break it into its two cases*)
+    (* The first case is where lA is empty*)
+  - reflexivity. (* This is trivial by the definition of same_list *)
+
+    (*The second case where lA is a list and has a head and a tail*)
+  - simpl.
+    (* this simpl unfolds same_list *)
+     rewrite Nat.eqb_refl. (* we use Nat.eqb_refl to rewrite the conditintional the
+                               compares the head of the list. This shows that the 
+                                conditional will always return true*)
+
+    apply IHlA. (* From here we can apply the inductive hypothesis *)
 Qed.
 
 
 (* Hints:
    - Start with  `split`, then prove both directions
 *)
+
+(*forall lists lA and lB, lA equals lB if and only if same_list lA lB equals true   *)
 Lemma same_list_eq : forall lA lB, same_list lA lB = true <-> lA = lB.
 Proof.
-split.
-- generalize dependent lB. induction lA.
-  * intros. simpl in H. destruct lB. auto. discriminate.
-  * intros. destruct lB. simpl in H. discriminate. simpl in H. destruct (a =? n) eqn:Han.
-    + Search (_ =? _ = true). rewrite Nat.eqb_eq in Han. rewrite Han. replace lA with lB.
-      auto. symmetry. apply IHlA. auto.
-    + discriminate.
-- generalize dependent lB. induction lA.
-  * intros. destruct lB. auto. discriminate.
-  * intros. destruct lB. discriminate. rewrite H. apply same_list_refl.
+split. (* split in the two directions of the if and only if *)
+
+-  generalize dependent lB. (* generalize lB so that it applies to any arbitrary list 
+                                and not a specific list *)
+   induction lA. (* induction on lA to split it into its two cases*)
+      (* In the first case lA is an empty list, then we simpl in H to show that for same_list
+         to be true lB also must be empty.  *)
+      * intros. simpl in H. destruct lB. (*destruct lB into its two cases *)
+          -- auto. (* the first case is trivial based on the definition of same_list*)
+          -- discriminate. (* the second case is nonsensical  based on the definition of same_list*)
+
+      (* This is the second case where lA is a head cons onto a tail*)
+      (**)
+      * intros. 
+           destruct lB. (* destruct lB into its two cases *)
+
+               (* first case where lB is empty *)
+              -- simpl in H. discriminate. (*simpl H so that it shows the contradiction
+                                             between the definition of same_list and the 
+                                             current hypothesis *) 
+
+              -- simpl in H. destruct (a =? n) eqn:Han. (* simpl H to unfold same_list and 
+                                                            destruct the conditional into
+                                                            its two cases*)
+                  (* The first case is where the heads of the lists are the same
+                      then we use Nat.eqb_eq to rewrite the boolean to the equality in Han  *)
+                    + Search (_ =? _ = true). rewrite Nat.eqb_eq in Han. 
+                      (* Then we can rewrite Han in our goal. Then we can replace lA with lB since 
+                          H tells us they are equal. We use auto to take care of the goal that is 
+                          reflexively true. *)  
+                      rewrite Han. replace lA with lB. auto. 
+                      (*The we use symmetry to flip the goal so that it matches our inductive hypothesis
+                        We then apply the inductive hypothesis and then apply H using auto. *)
+                      symmetry. apply IHlA. auto.
+
+                     (* The second case where the heads of the lists are different, this means 
+                        same_list is automatically false which makes H nonsensical*)
+                    + discriminate.
+(*second direction *) 
+
+- generalize dependent lB. (* generalize lB so that it applies to any arbitrary list 
+                                and not a specific list *)
+induction lA.  (* induction on lA to split it into its two cases*)
+
+  (* The first case where lA is empty*)
+  * intros. 
+        destruct lB. (*destruct lB into its two cases*)
+            (*first case where lA and lB are both empty*)
+          -- auto. (* this is reflexive by the definition of same_list and thus handled by auto.*)
+          -- discriminate. (*this case is nonsensical based on the definition of same_list *)
+    (*This is the second case where lA is a heads cons onto a tail *)
+  * intros. destruct lB. (*destruct lB into its two cases *) 
+      (* first case where lB is empty *)
+      -- discriminate. (* this is nonsensical based on the definition of same_list *)
+
+      (* rewrite H into the goal to show that the lists are the same*) 
+      -- rewrite H. apply same_list_refl. (* use the previously proven same_list_refl to show that a list
+                                             is always the same as itself *)
 Qed.
 
 
