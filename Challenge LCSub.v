@@ -143,7 +143,7 @@ Proof.
     (*The second case where lA is a list and has a head and a tail*)
   - simpl.
     (* this simpl unfolds same_list *)
-     rewrite Nat.eqb_refl. (* we use Nat.eqb_refl to rewrite the conditintional the
+     rewrite Nat.eqb_refl. (* we use Nat.eqb_refl to rewrite the conditional that
                                compares the head of the list. This shows that the 
                                 conditional will always return true*)
 
